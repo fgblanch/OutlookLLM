@@ -63,6 +63,10 @@ module.exports = async (env, options) => {
             filename: "assets/[name][ext][query]",
           },
         },
+        {
+          test: /\.(woff|woff2|ttf|eot)$/,
+          use: 'file-loader?name=fonts/[name].[ext]!static'
+         },
       ],
     },
     plugins: [

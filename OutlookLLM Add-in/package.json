@@ -30,6 +30,7 @@
     "@fluentui/react-icons": "^2.0.214",
     "core-js": "^3.9.1",
     "es6-promise": "^4.2.8",
+    "jquery": "^3.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "regenerator-runtime": "^0.13.7"

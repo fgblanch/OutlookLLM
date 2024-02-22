@@ -2,15 +2,15 @@
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" xsi:type="MailApp">
   <Id>eb774e01-2b8b-4518-8a0b-0475615abdd0</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Contoso</ProviderName>
+  <ProviderName>OutlookLLM</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="OutlookLLM Add-in"/>
-  <Description DefaultValue="A template to get started."/>
+  <DisplayName DefaultValue="OutlookLLM"/>
+  <Description DefaultValue="Add-in for new Outlook that adds LLM new features (Composition, Summarizing, Q&amp;A). It uses a local LLM via Nvidia TensorRT-LLM"/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-128.png"/>
-  <SupportUrl DefaultValue="https://www.contoso.com/help"/>
+  <SupportUrl DefaultValue="https://www.certeza.ai/help"/>
   <AppDomains>
-    <AppDomain>https://www.contoso.com</AppDomain>
+    <AppDomain>https://www.certeza.ai</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Mailbox"/>

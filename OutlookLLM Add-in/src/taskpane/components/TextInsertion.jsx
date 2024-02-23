@@ -15,16 +15,41 @@ const useStyles = makeStyles({
     marginTop: "30px",
     marginBottom: "15px",
     marginRight: "15px",
-    minHeight: "125px",
+    minHeight: "150px",
   },
   
-});dfgsdg
+});
 
 const TextInsertion = () => {
-  const [text, setText] = useState("Write a cold email to john doe to introduce our marketing services, and propose a brief intro meeting next wednesday. Use the following template [Subject] Subject text... [Body] Message body text...");
+  const [text, setText] = useState("Write a cold email to john doe to introduce our marketing services, and propose a brief intro meeting next wednesday.");
+
+
 
   const handleTextInsertion = async () => {
-    await insertText(text);sgdfsdfg
+    
+    try {
+      const response = await fetch('https://localhost:8385/composeEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: {
+          "prompt": text
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      // Handle success response if needed
+      console.log('Data sent successfully');
+    } catch (error) {
+      console.error('Error sending data:', error);
+    }
+
+    
+    await insertText(response)
   };
 
   const handleTextChange = async (event) => {

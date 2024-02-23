@@ -67,6 +67,28 @@
                   </Control>
                 </Group>
               </OfficeTab>
+            </ExtensionPoint>
+             <ExtensionPoint xsi:type="MessageReadCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="msgReadGroup">
+                  <Label resid="GroupLabel"/>
+                  <Control xsi:type="Button" id="msgReadOpenPaneButton">
+                    <Label resid="TaskpaneSummarizeButton.Label"/>
+                    <Supertip>
+                      <Title resid="TaskpaneSummarizeButton.Label"/>
+                      <Description resid="TaskpaneSummarizeButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16"/>
+                      <bt:Image size="32" resid="Icon.32x32"/>
+                      <bt:Image size="80" resid="Icon.80x80"/>
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <SourceLocation resid="Taskpane.Url"/>
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
             </ExtensionPoint>            
           </DesktopFormFactor>
         </Host>
@@ -80,14 +102,17 @@
         <bt:Urls>
           <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+          <bt:Url id="Summarizepane.Url" DefaultValue="https://localhost:3000/summarizepane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="OutlookLLM"/>
           <bt:String id="TaskpaneButton.Label" DefaultValue="Compose with AI"/>
+          <bt:String id="TaskpaneSummarizeButton.Label" DefaultValue="Summarize with AI"/>
         </bt:ShortStrings>
         <bt:LongStrings>
           <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Opens 'Compose with AI' pane"/>
           <bt:String id="ActionButton.Tooltip" DefaultValue="Compose with AI."/>
+          <bt:String id="TaskpaneSummarizeButton.Tooltip" DefaultValue="Summarize with AI"/>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

@@ -4,7 +4,7 @@ from flask import Flask, Response, request, jsonify
 from trt_llama_api import TrtLlmAPI
 from utils import messages_to_prompt, completion_to_prompt
 import json
-
+import logging
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description='OpenAI Compatible Server')
@@ -20,6 +20,10 @@ parser.add_argument('--verbose', type=bool, required=False,
                     help="Enable verbose logging.", default=False)
 
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 
 slot_id = -1
 parser.add_argument("--host", type=str, help="Set the ip address to listen.(default: 127.0.0.1)", default='127.0.0.1')
@@ -81,11 +85,15 @@ def composeEmail():
         stop_strings = body["stop"]
 
     if verbose:
-        print("/completions called with stream=" + str(stream))
+        print("/composeEmail called with stream=" + str(stream))
+
+    app.logger.info('/composeEmail called')
 
     prompt = ""
     if "prompt" in body:
         prompt = body["prompt"]
+
+    app.logger.info('/composeEmail called with prompt=%s ', prompt)
 
     if not no_system_prompt:
         prompt = completion_to_prompt(prompt)

@@ -1,6 +1,7 @@
 Flask==2.2.5
 flask-marshmallow==0.15.0
 Flask-Migrate==4.0.4
+Flask-cors
 numpy==1.24.0
 pydantic==2.3.0
 pydantic-core==2.6.3

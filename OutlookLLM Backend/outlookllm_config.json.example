@@ -1,5 +1,12 @@
 {
     "https_cert_file": "C:\\Users\\Your User\\.office-addin-dev-certs\\localhost.crt",
-    "https_key_file": "C:\\Users\\Your User\\.office-addin-dev-certs\\localhost.key"
-
+    "https_key_file": "C:\\Users\\Your User\\.office-addin-dev-certs\\localhost.key",
+    "trt_engine_path" : "",
+    "trt_engine_name" : "",
+    "tokenizer_dir_path" : "", 
+    "verbose" : false,
+    "host" : "127.0.0.1",
+    "port" : "8385",
+    "max_output_tokens": 2048,
+    "max_input_tokens": 2048
 }

@@ -26,30 +26,32 @@ const TextInsertion = () => {
 
 
   const handleTextInsertion = async () => {
-    
     try {
-      const response = await fetch('https://localhost:8385/composeEmail', {
-        method: 'POST',
+      const response = await fetch("https://localhost:8385/composeEmail", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: {
-          "prompt": text
-        }
+        body: JSON.stringify({
+          prompt: text,
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       // Handle success response if needed
       console.log('Data sent successfully');
+      
+      const textContent = await response.text();
+      await insertText(textContent);
+
     } catch (error) {
       console.error('Error sending data:', error);
     }
 
     
-    await insertText(response)
   };
 
   const handleTextChange = async (event) => {

@@ -20,24 +20,10 @@
 # DEALINGS IN THE SOFTWARE.
 
 import os
-from typing import Any, Callable, Dict, Optional, Sequence
-from llama_index.bridge.pydantic import Field, PrivateAttr
-from llama_index.callbacks import CallbackManager
-from llama_index.constants import DEFAULT_CONTEXT_WINDOW, DEFAULT_NUM_OUTPUTS
-from llama_index.llms.base import (
-    ChatMessage,
-    ChatResponse,
-    CompletionResponse,
-    LLMMetadata,
-    llm_chat_callback,
-    llm_completion_callback,
-)
-from llama_index.llms.custom import CustomLLM
-from llama_index.llms.generic_utils import completion_response_to_chat_response
-from llama_index.llms.generic_utils import (
-    messages_to_prompt as generic_messages_to_prompt,
-)
-from transformers import LlamaTokenizer
+import flask
+from flask import jsonify
+
+from transformers import AutoTokenizer
 import gc
 import json
 import torch
@@ -47,11 +33,129 @@ import tensorrt_llm
 from pathlib import Path
 import uuid
 import time
+from typing import Any, Callable, Optional, Dict
+from utils import EOS
 
 EOS_TOKEN = 2
 PAD_TOKEN = 2
 
-class TrtLlmAPI(CustomLLM):
+DEFAULT_CONTEXT_WINDOW = 3900
+DEFAULT_NUM_OUTPUTS = 256
+
+try:
+    from pydantic.v1 import (
+        BaseModel,
+        Field,
+        PrivateAttr,
+        root_validator,
+        validator,
+        create_model,
+        StrictFloat,
+        StrictInt,
+        StrictStr,
+    )
+    from pydantic.v1.fields import FieldInfo
+    from pydantic.v1.error_wrappers import ValidationError
+except ImportError:
+    from pydantic import (
+        BaseModel,
+        Field,
+        PrivateAttr,
+        root_validator,
+        validator,
+        create_model,
+        StrictFloat,
+        StrictInt,
+        StrictStr,
+    )
+    from pydantic.fields import FieldInfo
+    from pydantic.error_wrappers import ValidationError
+
+
+def make_resData(data, chat=False, promptToken=[]):
+    resData = {
+        "id": f"chatcmpl-{str(uuid.uuid4())}" if (chat) else f"cmpl-{str(uuid.uuid4())}",
+        "object": "chat.completion" if (chat) else "text_completion",
+        "created": int(time.time()),
+        "truncated": data["truncated"],
+        "model": "LLaMA",
+        "usage": {
+            "prompt_tokens": data["prompt_tokens"],
+            "completion_tokens": data["completion_tokens"],
+            "total_tokens": data["prompt_tokens"] + data["completion_tokens"]
+        }
+    }
+    if (len(promptToken) != 0):
+        resData["promptToken"] = promptToken
+    if (chat):
+        # only one choice is supported
+        resData["choices"] = [{
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": data["content"],
+            },
+            "finish_reason": "stop" if data["stopped"] else "length"
+        }]
+    else:
+        # only one choice is supported
+        resData["choices"] = [{
+            "text": data["content"],
+            "index": 0,
+            "logprobs": None,
+            "finish_reason": "stop" if data["stopped"] else "length"
+        }]
+    return resData
+
+
+def make_resData_stream(data, chat=False, start=False):
+    resData = {
+        "id": "chatcmpl" if (chat) else "cmpl",
+        "object": "chat.completion.chunk" if (chat) else "text_completion.chunk",
+        "created": int(time.time()),
+        "model": "LLaMA",
+        "choices": [
+            {
+                "finish_reason": None,
+                "index": 0
+            }
+        ]
+    }
+    slot_id = data["slot_id"]
+    if (chat):
+        if (start):
+            resData["choices"][0]["delta"] = {
+                "role": "assistant"
+            }
+        else:
+            resData["choices"][0]["delta"] = {
+                "content": data["content"]
+            }
+            if (data["stop"]):
+                resData["choices"][0]["finish_reason"] = "stop" if data["stopped"]  else "length"
+    else:
+        resData["choices"][0]["text"] = data["content"]
+        if (data["stop"]):
+            resData["choices"][0]["finish_reason"] = "stop" if data["stopped"] else "length"
+
+    return resData
+
+
+class LLMMetadata(BaseModel):
+    """LLM metadata."""
+
+    context_window: int = DEFAULT_CONTEXT_WINDOW
+    num_output: int = DEFAULT_NUM_OUTPUTS
+    is_chat_model: bool = False
+    is_function_calling_model: bool = False
+    # By default we don't know the model name. We can set it automatically for
+    # some types, but custom predictors (like locally loaded models) we won't
+    # know.
+    # Used for tests, logging, and sanity checks
+    model_name: str = "unknown"
+
+
+class TrtLlmAPI(BaseModel):
     model_path: Optional[str] = Field(
         description="The path to the trt engine."
     )
@@ -91,7 +195,6 @@ class TrtLlmAPI(CustomLLM):
             context_window: int = DEFAULT_CONTEXT_WINDOW,
             messages_to_prompt: Optional[Callable] = None,
             completion_to_prompt: Optional[Callable] = None,
-            callback_manager: Optional[CallbackManager] = None,
             generate_kwargs: Optional[Dict[str, Any]] = None,
             model_kwargs: Optional[Dict[str, Any]] = None,
             verbose: bool = False
@@ -154,7 +257,7 @@ class TrtLlmAPI(CustomLLM):
                                                        tp_size=tp_size,
                                                        pp_size=pp_size)
                 torch.cuda.set_device(runtime_rank % runtime_mapping.gpus_per_node)
-                self._tokenizer = LlamaTokenizer.from_pretrained(tokenizer_dir, legacy=False)
+                self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, legacy=False)
                 self._sampling_config = SamplingConfig(end_id=EOS_TOKEN,
                                                        pad_id=PAD_TOKEN,
                                                        num_beams=1,
@@ -175,7 +278,6 @@ class TrtLlmAPI(CustomLLM):
         generate_kwargs.update(
             {"temperature": temperature, "max_tokens": max_new_tokens}
         )
-
         super().__init__(
             model_path=model_path,
             temperature=temperature,
@@ -183,7 +285,6 @@ class TrtLlmAPI(CustomLLM):
             max_new_tokens=max_new_tokens,
             messages_to_prompt=messages_to_prompt,
             completion_to_prompt=completion_to_prompt,
-            callback_manager=callback_manager,
             generate_kwargs=generate_kwargs,
             model_kwargs=model_kwargs,
             verbose=verbose,
@@ -203,17 +304,18 @@ class TrtLlmAPI(CustomLLM):
             model_name=self.model_path,
         )
 
-    @llm_chat_callback()
-    def chat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponse:
-        prompt = self.messages_to_prompt(messages)
-        completion_response = self.complete(prompt, formatted=True, **kwargs)
-        return completion_response_to_chat_response(completion_response)
+    def chat_complete(self, prompt: str, **kwargs: Any) -> flask.Response:
+        return self.complete_common(prompt, True)
 
-    @llm_completion_callback()
-    def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        self.generate_kwargs.update({"stream": False})
+    def complete(self, prompt: str, **kwargs: Any) -> flask.Response:
+        return self.complete_common(prompt, False)
 
+    def complete_common(self, prompt: str, chat: bool, **kwargs: Any):
+        assert len(prompt) > 0
         is_formatted = kwargs.pop("formatted", False)
+        temperature = kwargs.pop("temperature", 1.0)
+        #TODO: need to respect (truncate output after) stop strings.
+        stop_strings = kwargs.pop("stop_strings", "")
         if not is_formatted:
             prompt = self.completion_to_prompt(prompt)
 
@@ -223,10 +325,11 @@ class TrtLlmAPI(CustomLLM):
                                                     self._model_config)
 
         max_input_length = torch.max(input_lengths).item()
-        self._model.setup(input_lengths.size(0), max_input_length, self._max_new_tokens, 1) # beam size is set to 1
+        self._model.setup(input_lengths.size(0), max_input_length, self._max_new_tokens, 1)  # beam size is set to 1
         if self._verbose:
             start_time = time.time()
 
+        self._sampling_config.temperature = temperature
         output_ids = self._model.decode(input_ids, input_lengths, self._sampling_config)
         torch.cuda.synchronize()
 
@@ -235,11 +338,10 @@ class TrtLlmAPI(CustomLLM):
             end_time = time.time()
             elapsed_time = end_time - start_time
 
-
         output_txt, output_token_ids = self.get_output(output_ids,
-                                       input_lengths,
-                                       self._max_new_tokens,
-                                       self._tokenizer)
+                                                       input_lengths,
+                                                       self._max_new_tokens,
+                                                       self._tokenizer)
 
         if self._verbose:
             print(f"Input context length  : {input_ids.shape[1]}")
@@ -251,7 +353,16 @@ class TrtLlmAPI(CustomLLM):
         torch.cuda.empty_cache()
         gc.collect()
 
-        return CompletionResponse(text=output_txt, raw=self.generate_completion_dict(output_txt))
+        thisdict = dict(truncated=False,
+                        prompt_tokens=input_ids.shape[1],
+                        completion_tokens=len(output_token_ids),
+                        content=str(output_txt),
+                        stopped=False,
+                        slot_id=1,
+                        stop=True)
+
+        resData = make_resData(thisdict, chat=chat)
+        return jsonify(resData)
 
     def parse_input(self, input_text: str, tokenizer, end_id: int,
                     remove_input_padding: bool):
@@ -296,35 +407,75 @@ class TrtLlmAPI(CustomLLM):
 
         return output_text, outputs
 
-    def generate_completion_dict(self, text_str):
-        """
-        Generate a dictionary for text completion details.
-        Returns:
-        dict: A dictionary containing completion details.
-        """
-        completion_id: str = f"cmpl-{str(uuid.uuid4())}"
-        created: int = int(time.time())
-        model_name: str = self._model if self._model is not None else self.model_path
-        return {
-            "id": completion_id,
-            "object": "text_completion",
-            "created": created,
-            "model": model_name,
-            "choices": [
-                {
-                    "text": text_str,
-                    "index": 0,
-                    "logprobs": None,
-                    "finish_reason": 'stop'
-                }
-            ],
-            "usage": {
-                "prompt_tokens": None,
-                "completion_tokens": None,
-                "total_tokens": None
-            }
-        }
+    def stream_complete(self, prompt: str, **kwargs: Any) -> flask.Response:
+        return self.stream_complete_common(prompt, False)
 
-    @llm_completion_callback()
-    def stream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        pass
+    def stream_chat_complete(self, prompt: str, **kwargs: Any) -> flask.Response:
+        return self.stream_complete_common(prompt, True)
+
+    def stream_complete_common(self, prompt: str, chat: bool, **kwargs: Any) -> flask.Response:
+        assert len(prompt) > 0
+        is_formatted = kwargs.pop("formatted", False)
+        temperature = kwargs.pop("temperature", 1.0)
+        stop_strings = kwargs.pop("stop_strings", "")
+        if not is_formatted:
+            prompt = self.completion_to_prompt(prompt)
+
+        input_text = prompt
+        input_ids, input_lengths = self.parse_input(input_text, self._tokenizer,
+                                                    EOS_TOKEN,
+                                                    self._model_config)
+
+        max_input_length = torch.max(input_lengths).item()
+        self._model.setup(input_lengths.size(0), max_input_length, self._max_new_tokens, 1)  # beam size is set to 1
+        self._sampling_config.temperature = temperature
+        output_ids = self._model.decode(input_ids, input_lengths, self._sampling_config, streaming=True)
+
+        def gen() -> flask.Response:
+            thisdict = dict(truncated=False,
+                            prompt_tokens=max_input_length,
+                            completion_tokens=0,
+                            content="",
+                            stopped=False,
+                            slot_id=1,
+                            stop=False)
+            resData = make_resData_stream(thisdict, chat=chat, start=True)
+            yield 'data: {}\n'.format(json.dumps(resData))
+
+            text = ""
+            dictForDelta = dict(truncated=False,
+                                prompt_tokens=max_input_length,
+                                completion_tokens=0,
+                                content="",
+                                stopped=False,
+                                slot_id=1,
+                                stop=False)
+
+            for output_ids_delta in output_ids:
+                output_txt, output_token_ids = self.get_output(output_ids_delta,
+                                                               input_lengths,
+                                                               self._max_new_tokens,
+                                                               self._tokenizer)
+
+                if not dictForDelta["truncated"]:
+                    delta_text = output_txt[len(text):]
+                    text = output_txt.removesuffix(EOS)
+
+                    dictForDelta["content"] = delta_text.removesuffix(EOS)
+                    dictForDelta["completion_tokens"] = len(output_token_ids)
+                    resData = make_resData_stream(dictForDelta, chat=chat)
+                    yield 'data: {}\n'.format(json.dumps(resData))
+
+                    for stop_string in stop_strings:
+                        if stop_string in text:
+                            dictForDelta["truncated"] = True
+                            break
+
+
+            # close last message
+            dictForDelta["content"] = ""
+            dictForDelta["stop"] = True
+            resData = make_resData_stream(dictForDelta, chat=chat)
+            yield 'data: {}\n'.format(json.dumps(resData))
+
+        return flask.Response(gen(), mimetype='text/event-stream')

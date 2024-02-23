@@ -8,7 +8,7 @@ const useStyles = makeStyles({
     flexDirection: "column",
     alignItems: "center",
     paddingBottom: "30px",
-    paddingTop: "100px",
+    paddingTop: "50px",
     backgroundColor: tokens.colorNeutralBackground3,
   },
   message: {
@@ -23,9 +23,8 @@ const Header = (props) => {
   const styles = useStyles();
 
   return (
-    <section className={styles.welcome__header}>
-      <Image width="90" height="90" src={logo} alt={title} />
-      <h1 className={styles.message}>{message}</h1>
+    <section className={styles.welcome__header}>      
+      <h2 className={styles.message}>{message}</h2>
     </section>
   );
 };

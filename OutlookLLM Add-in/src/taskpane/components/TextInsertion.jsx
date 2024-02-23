@@ -1,34 +1,30 @@
 import * as React from "react";
 import { useState } from "react";
-import { Button, Field, Textarea, tokens, makeStyles } from "@fluentui/react-components";
+import { Button, Field, Title3, Textarea, tokens, makeStyles } from "@fluentui/react-components";
 import insertText from "../office-document";
 
 const useStyles = makeStyles({
-  instructions: {
-    fontWeight: tokens.fontWeightSemibold,
-    marginTop: "20px",
-    marginBottom: "10px",
-  },
+  
   textPromptAndInsertion: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
   },
   textAreaField: {
-    marginLeft: "20px",
+    marginLeft: "15px",
     marginTop: "30px",
-    marginBottom: "20px",
-    marginRight: "20px",
-    maxWidth: "50%",
+    marginBottom: "15px",
+    marginRight: "15px",
+    minHeight: "125px",
   },
-});
+  
+});dfgsdg
 
 const TextInsertion = () => {
-  const [text, setText] = useState("Some text.");
+  const [text, setText] = useState("Write a cold email to john doe to introduce our marketing services, and propose a brief intro meeting next wednesday. Use the following template [Subject] Subject text... [Body] Message body text...");
 
   const handleTextInsertion = async () => {
-    
-    await insertText(text);
+    await insertText(text);sgdfsdfg
   };
 
   const handleTextChange = async (event) => {
@@ -39,12 +35,12 @@ const TextInsertion = () => {
 
   return (
     <div className={styles.textPromptAndInsertion}>
-      <Field className={styles.textAreaField} size="large" label="Enter text to be inserted into the document.">
-        <Textarea size="large" value={text} onChange={handleTextChange} />
+      <Title3>Compose with AI</Title3>
+      <Field className={styles.textAreaField} size="medium" label="Describe the email you need AI help you with:">
+        <Textarea size="medium" className="{styles.textArea}" placeholder={text} onChange={handleTextChange} resize="vertical"/>
       </Field>
-      <Field className={styles.instructions}>Click the button to insert text.</Field>
       <Button appearance="primary" disabled={false} size="large" onClick={handleTextInsertion}>
-        Insert text
+        Compose draft with AI.
       </Button>
     </div>
   );

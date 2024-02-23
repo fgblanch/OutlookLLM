@@ -1,0 +1,5 @@
+{
+    "https_cert_file": "C:\\Users\\Your User\\.office-addin-dev-certs\\localhost.crt",
+    "https_key_file": "C:\\Users\\Your User\\.office-addin-dev-certs\\localhost.key"
+
+}

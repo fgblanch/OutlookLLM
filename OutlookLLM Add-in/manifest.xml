@@ -5,12 +5,12 @@
   <ProviderName>OutlookLLM</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="OutlookLLM"/>
-  <Description DefaultValue="Add-in for new Outlook that adds LLM new features (Composition, Summarizing, Q&amp;A). It uses a local LLM via Nvidia TensorRT-LLM"/>
+  <Description DefaultValue="Add-in for new Outlook that adds Generative AI features (Composition, Summarizing, Q&amp;A). It is private and secure as it uses a local LLM served via Nvidia TensorRT-LLM."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://www.certeza.ai/help"/>
   <AppDomains>
-    <AppDomain>https://www.certeza.ai</AppDomain>
+    <AppDomain>https://localhost</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Mailbox"/>
@@ -48,7 +48,7 @@
             <FunctionFile resid="Commands.Url"/>
             <ExtensionPoint xsi:type="MessageComposeCommandSurface">
               <OfficeTab id="TabDefault">
-                <Group id="msgComposeGroup">
+                <Group id="msgComposeCmdGroup">
                   <Label resid="GroupLabel"/>
                   <Control xsi:type="Button" id="msgComposeOpenPaneButton">
                     <Label resid="TaskpaneButton.Label"/>
@@ -67,7 +67,7 @@
                   </Control>
                 </Group>
               </OfficeTab>
-            </ExtensionPoint>
+            </ExtensionPoint>            
           </DesktopFormFactor>
         </Host>
       </Hosts>
@@ -82,12 +82,12 @@
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
-          <bt:String id="GroupLabel" DefaultValue="Contoso Add-in"/>
-          <bt:String id="TaskpaneButton.Label" DefaultValue="Show Taskpane"/>
+          <bt:String id="GroupLabel" DefaultValue="OutlookLLM"/>
+          <bt:String id="TaskpaneButton.Label" DefaultValue="Compose with AI"/>
         </bt:ShortStrings>
         <bt:LongStrings>
-          <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Opens a task pane."/>
-          <bt:String id="ActionButton.Tooltip" DefaultValue="Perform an action when clicked."/>
+          <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Opens 'Compose with AI' pane"/>
+          <bt:String id="ActionButton.Tooltip" DefaultValue="Compose with AI."/>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

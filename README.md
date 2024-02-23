@@ -7,13 +7,11 @@ This system has two componentes: 1) An Outlook Add-in front end (React, Office A
 
 To get the system running:
 
-1. Clone this [repository](https://github.com/fgblanch/OutlookLLM.git): 
-```
-git clone https://github.com/fgblanch/OutlookLLM.git
-```
+1. Clone this [repository](https://github.com/fgblanch/OutlookLLM.git):
 
-The project is compose of two modules:
-
+   ```
+   git clone https://github.com/fgblanch/OutlookLLM.git
+   ```
 2. Install LLM dependencies:
 
   2.1 Install [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM/) for Windows using the instructions [here](https://github.com/NVIDIA/TensorRT-LLM/blob/release/0.5.0/windows/README.md).

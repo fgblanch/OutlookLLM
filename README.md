@@ -1,5 +1,5 @@
-# OutlookLLM
-Add-in for new Outlook that adds LLM new features (Composition, Summarizing, Q&amp;A). It uses a local LLM via Nvidia TensorRT-LLM
+# OutlookLLM ![https://github.com/fgblanch/OutlookLLM/OutlookLLM Add-in/assets/OutlookLLM.png](https://github.com/fgblanch/OutlookLLM/blob/8098168d39ec212007afc4500b0826f054179027/OutlookLLM%20Add-in/assets/OutlookLLM.png) 
+Outlook Add-in to use Generative AI features (Email writing, Thread Summarization, Inbox Q&amp;A) securely and privately. It is private and secure by design as it uses a local LLM served via Nvidia TensorRT-LLM. Great for corporate environments.
 
 
 ## Installation (Windows):

@@ -295,6 +295,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+#.vscode
+.vscode
+.vscode/
 
 # OutlookLLM config
 outlookllm_config.json

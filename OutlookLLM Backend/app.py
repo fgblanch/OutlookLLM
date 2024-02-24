@@ -100,9 +100,9 @@ llm = TrtLlmAPI(
     verbose=False
 )
 
-def completions(prompt, temperature= 1.0, stop_strings = []):
+def completions(prompt, temperature= 1.0, stop_strings = [], system_prompt=None):
     app.logger.info('llm completion with prompt=%s ', prompt)
-    prompt_final = completion_to_prompt(prompt)
+    prompt_final = completion_to_prompt(prompt,system_prompt)
     return llm.complete_common(prompt_final, False, temperature=temperature, formatted=True, stop_strings=stop_strings)
     
 
@@ -115,9 +115,39 @@ def composeEmail():
     if "prompt" in body:
         user_prompt = body["prompt"]
 
-    llm_response = completions(prompt=user_prompt)
-    app.logger.info('llm completion response:\n %s ', llm_response)
-    response = {'subject':'hello', 'body':'message body'}
+    system_prompt = """\
+    You are a helpful, respectful and honest email writing assistant. \
+    Always answer as helpfully as possible and follow ALL given instructions. \
+    Do not speculate or make up information. \
+    Do not reference any given instructions or context. \
+    Do not be too verbose. \
+    Write your responses in two sections. 
+    <Subject> You write here the email subject.
+    <Body> You write here the email body.
+    """
+
+
+    llm_response = completions(prompt=user_prompt, system_prompt=system_prompt)
+    llm_response_json = llm_response.get_json()
+    llm_text = llm_response_json["choices"][0]["text"]
+
+    # Extract the subject and body
+    subject_start = llm_text.find("<Subject>")
+    body_start = llm_text.find("<Body>", subject_start)
+    body_end = llm_text.find("</s>", body_start)
+
+    
+    subject = llm_text[subject_start + 9:body_start]
+    body = llm_text[body_start + 6:body_end]
+
+    subject = subject.strip()
+    body = body.strip()
+
+    app.logger.info('llm completion response:\n %s ', json.dumps(llm_response.get_json(), indent=4, sort_keys=True))
+
+    #app.logger.info('llm text:\n %s ', llm_text)
+
+    response = {'subject': subject, 'body': body}
     return json.dumps(response)
 
 if __name__ == '__main__':

@@ -3,8 +3,19 @@
 const insertText = async (text) => {
   // Write text to the cursor point in the compose surface.
   try {
-    Office.context.mailbox.item.body.setSelectedDataAsync(
-      text,
+    
+    const respSetSubject = await Office.context.mailbox.item.subject.setAsync(
+      text.subject,
+      { coercionType: Office.CoercionType.Text },
+      (asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          throw asyncResult.error.message;
+        }
+      }
+    );  
+
+    const respSetBody = await Office.context.mailbox.item.body.setSelectedDataAsync(
+      text.body,
       { coercionType: Office.CoercionType.Text },
       (asyncResult) => {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
@@ -12,6 +23,7 @@ const insertText = async (text) => {
         }
       }
     );
+
   } catch (error) {
     console.log("Error: " + error);
   }

@@ -100,41 +100,25 @@ llm = TrtLlmAPI(
     verbose=False
 )
 
+def completions(prompt, temperature= 1.0, stop_strings = []):
+    app.logger.info('llm completion with prompt=%s ', prompt)
+    prompt_final = completion_to_prompt(prompt)
+    return llm.complete_common(prompt_final, False, temperature=temperature, formatted=True, stop_strings=stop_strings)
+    
+
 @app.route('/composeEmail', methods=['POST'])
 def composeEmail():
     assert request.headers.get('Content-Type') == 'application/json'
-    stream = False
-    temperature = 1.0
     body = request.get_json()
-    if (is_present(body, "stream")):
-        stream = body["stream"]
-    if (is_present(body, "temperature")):
-        temperature = body["temperature"]
-
-    stop_strings = []
-    if is_present(body, "stop"):
-        stop_strings = body["stop"]
-
-    if verbose:
-        print("/composeEmail called with stream=" + str(stream))
-
-    app.logger.info('/composeEmail called')
-
-    prompt = ""
+    
+    user_prompt = ""
     if "prompt" in body:
-        prompt = body["prompt"]
+        user_prompt = body["prompt"]
 
-    app.logger.info('/composeEmail called with prompt=%s ', prompt)
-
-    #if not no_system_prompt:
-    prompt = completion_to_prompt(prompt)
-    formatted = True
-
-    if not stream:
-        return llm.complete_common(prompt, False, temperature=temperature, formatted=formatted, stop_strings=stop_strings)
-    else:
-        return llm.stream_complete_common(prompt, False, temperature=temperature, formatted=formatted, stop_strings=stop_strings)
-
+    llm_response = completions(prompt=user_prompt)
+    app.logger.info('llm completion response:\n %s ', llm_response)
+    response = {'subject':'hello', 'body':'message body'}
+    return json.dumps(response)
 
 if __name__ == '__main__':
     # Outlook add-ins can only call URLs under https, here we retrieve the https config and add it to Flask server

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
-import { Button, Field, Title3, Textarea, tokens, makeStyles } from "@fluentui/react-components";
+import { Button, Field, Title3, Checkbox, Textarea, Text, Spinner, tokens, makeStyles } from "@fluentui/react-components";
 import insertText from "../office-document";
 
 const useStyles = makeStyles({
@@ -9,24 +9,47 @@ const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    justifyContent: "flex-start"
   },
-  textAreaField: {
+
+  textField: {
     marginLeft: "15px",
     marginTop: "30px",
-    marginBottom: "15px",
+    marginRight: "15px",
+    
+  },
+
+  textAreaField: {
+    marginLeft: "15px",
+    marginTop: "10px",
+    
     marginRight: "15px",
     minHeight: "150px",
   },
+
+  textCheck: {
+    marginTop: "10px",
+    marginLeft: "15px",
+    marginRight: "15px",
+    
+  },
+
+  checkStyle: {
+    marginBottom: "15px",
+  }
   
 });
 
 const TextInsertion = () => {
-  const [text, setText] = useState("Write a cold email to john doe to introduce our marketing services, and propose a brief intro meeting next wednesday.");
-
+  const [text, setText] = useState("Write a cold email to introduce our marketing services, and propose a brief intro meeting next wednesday.");
+  const [showSpinner, setshowSpinner] = useState(false);
 
 
   const handleTextInsertion = async () => {
     try {
+      
+      setshowSpinner(true);
+      
       const response = await fetch("https://localhost:8385/composeEmail", {
         method: "POST",
         headers: {
@@ -43,11 +66,13 @@ const TextInsertion = () => {
 
       // Handle success response if needed
       console.log('Data sent successfully');
-      
-      const textContent = await response.text();
+    
+      const textContent = await response.json();
       await insertText(textContent);
+      setshowSpinner(false);
 
     } catch (error) {
+      setshowSpinner(false);
       console.error('Error sending data:', error);
     }
 
@@ -63,12 +88,19 @@ const TextInsertion = () => {
   return (
     <div className={styles.textPromptAndInsertion}>
       <Title3>Compose with AI</Title3>
-      <Field className={styles.textAreaField} size="medium" label="Describe the email you need AI help you with:">
+      <Text className={styles.textField} size="medium" >1. Set the cursor where you want to insert the AI generated email.</Text>
+      <Field className={styles.textAreaField} size="medium" label="2. Describe the email you need AI help you with:">
         <Textarea size="medium" className="{styles.textArea}" placeholder={text} onChange={handleTextChange} resize="vertical"/>
       </Field>
+      <Text className={styles.textCheck} size="medium" >3. Check if you want also AI to generate the email subject.</Text>
+      <Checkbox className={styles.checkStyle} label="Generate Email Subject" />
       <Button appearance="primary" disabled={false} size="large" onClick={handleTextInsertion}>
-        Compose draft with AI.
+        {showSpinner && (
+          <Spinner  id="spinner" appearance="inverted"/>
+        )} 
+        {showSpinner ? '   Generating email...' : 'Compose with AI'}
       </Button>
+      
     </div>
   );
 };

@@ -14,10 +14,11 @@ const insertText = async (text, writeSubject) => {
         }
       );  
     }
+    console.log('emailbody: '+ text.body);  
 
     const respSetBody = await Office.context.mailbox.item.body.setSelectedDataAsync(
-      text.body,
-      { coercionType: Office.CoercionType.Text },
+      text.body.replace(/\n/g, '<br>'),
+      { coercionType: Office.CoercionType.Html },
       (asyncResult) => {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
           throw asyncResult.error.message;

@@ -1,3 +1,7 @@
+# DEPRECATED
+## This repository is no longer maintained and is kept for archival purposes only. No further updates, bug fixes, or security fixes will be provided.
+
+
 # OutlookLLM ![https://github.com/fgblanch/OutlookLLM/OutlookLLM Add-in/assets/OutlookLLM.png](https://github.com/fgblanch/OutlookLLM/blob/8098168d39ec212007afc4500b0826f054179027/OutlookLLM%20Add-in/assets/OutlookLLM.png) 
 Outlook Add-in to use Generative AI features (Email composition, Email Thread Summarization (WIP), Inbox Q&amp;A(WIP)) securely and privately. It uses a local LLM served via Nvidia TensorRT-LLM. 
 
